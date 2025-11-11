@@ -20,17 +20,20 @@ flowchart TD
         B[Preprocessing]
         C[Dense vectorize]
         D[Sparse vectorize]
+        H[Inverted Index Build]
         E[/Dense embeddings/]
         F[/Sparse embeddings/]
-        G[(Qdrant DB)]
+        I[/Postings lists/]
+        G[(Postgres DB)]
 
         A --> B
         B --> C --> E --> G
         B --> D --> F --> G
+        B --> H --> I --> G
 
         class A source;
-        class B,C,D process;
-        class E,F output;
+        class B,C,D,H process;
+        class E,F,I output;
         class G storage;
     end
 
@@ -54,30 +57,33 @@ flowchart TD
 }}%%
 flowchart TD
     subgraph Users Retrieving
-        A[User Queries]
+        A[/User Queries/]
         B[Dense vectorize]
         C[Sparse vectorize]
+        P[Tokenize]
         D[/Query dense embeddings/]
         E[/Query sparse embeddings/]
+        Q[/Tokenized Queries/]
         F[Querying DB]
-        G[(Qdrant DB)]
+        G[(Postgres DB)]
         H[Fusion]
         I[/Top-K Candidates/]
-        J[Reranking with Cross-Encoder]
+        J[Rerank with Cross-Encoder]
         K[/Reranked Candidates/]
-        L[Prompt Combine]
+        L[Prompt Augment]
         M[/Prompt with Context/]
         N[LLM Q&A]
         O[/Final Answers/]
 
         A --> B --> D --> F
         A --> C --> E --> F
+        A --> P --> Q --> F
         F --> G --> H --> I --> J --> K --> L
         A --> L --> M --> N --> O
 
         class A input;
-        class B,C,D,E,F,H,J,L,N process;
-        class I,K,M,O output;
+        class B,C,F,H,J,L,N,P process;
+        class D,E,I,K,M,O,Q output;
         class G storage;
     end
 
@@ -94,5 +100,5 @@ flowchart TD
 - [x] Hybrid Retrieval (vector)
 - [x] Reranking with Cross-Encoder
 - [x] Sparse Retrieval with Inverted Index (for presentation)
-- [ ] LLM Q&A
-- [ ] Dockerize the entire pipeline
+- [x] LLM Q&A
+- [x] Dockerize the entire pipeline (still not test, not sure it can run)
