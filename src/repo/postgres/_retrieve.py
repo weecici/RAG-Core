@@ -6,7 +6,7 @@ from src import schemas
 from src.core import config
 from src.services.internal import fuse_results
 from src.utils import *
-from .storage import (
+from ._storage import (
     get_pg_conn,
     ensure_collection_exists,
     POSTINGS_LIST_TABLE_SUFFIX,
@@ -177,7 +177,7 @@ def index_search(
     collection_name: str,
     top_k: int = 5,
     word_process_method: str = config.WORD_PROCESS_METHOD,
-    scoring_method: Literal["tfidf", "okapi-bm25"] = "okapi-bm25",
+    scoring_method: Literal["tfidf", "okapi-bm25"] = config.SCORING_METHOD,
 ) -> list[list[schemas.RetrievedDocument]]:
     conn = get_pg_conn()
     ensure_collection_exists(collection_name=collection_name)

@@ -9,7 +9,6 @@ from src.repo.postgres import (
     hybrid_search,
     ii_hybrid_search,
 )
-from src.services.internal import fuse_results
 
 
 def retrieve_documents(request: schemas.RetrievalRequest) -> schemas.RetrievalResponse:
