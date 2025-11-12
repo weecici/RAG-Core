@@ -19,7 +19,7 @@ SPARSE_MODEL = os.getenv("SPARSE_MODEL", "splade-v3")
 SPARSE_MODEL_PATH = os.getenv("SPARSE_MODEL_PATH", "naver/splade-v3")
 SPARSE_DIM = int(os.getenv("SPARSE_DIM", "131072"))
 
-# inverted index scoring method
+# inverted index ranking algo
 SCORING_METHOD = os.getenv("SCORING_METHOD", "okapi-bm25")
 
 # reranking model
