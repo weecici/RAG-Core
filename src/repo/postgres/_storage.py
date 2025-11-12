@@ -191,14 +191,14 @@ def upsert_data(
         """
 		INSERT INTO {table} (id, text, document_id, title, file_name, file_path, {dense_col}, {sparse_col}, doc_len)
 		VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-		ON CONFLICT (id) DO UPDATE SET
-			text = EXCLUDED.text,
-			document_id = EXCLUDED.document_id,
-			title = EXCLUDED.title,
-			file_name = EXCLUDED.file_name,
-			file_path = EXCLUDED.file_path,
-			{dense_col} = EXCLUDED.{dense_col},
-			{sparse_col} = EXCLUDED.{sparse_col};
+        --ON CONFLICT (id) DO UPDATE SET
+        --  text = EXCLUDED.text,
+        --  document_id = EXCLUDED.document_id,
+        --  title = EXCLUDED.title,
+        --  file_name = EXCLUDED.file_name,
+        --  file_path = EXCLUDED.file_path,
+        --  {dense_col} = EXCLUDED.{dense_col},
+        --  {sparse_col} = EXCLUDED.{sparse_col};
 		"""
     ).format(
         table=sql.Identifier(collection_name),
@@ -211,7 +211,7 @@ def upsert_data(
         INSERT INTO {df_table} (term, doc_freq)
         VALUES (%s, %s)
         ON CONFLICT (term) DO UPDATE SET
-            doc_freq = EXCLUDED.doc_freq;
+            doc_freq = {df_table}.doc_freq + EXCLUDED.doc_freq;
         """
     ).format(
         df_table=sql.Identifier(f"{collection_name}_{DOC_FREQ_TABLE_SUFFIX}"),
@@ -221,8 +221,8 @@ def upsert_data(
         """
         INSERT INTO {pl_table} (term, doc_id, freq)
         VALUES (%s, %s, %s)
-        ON CONFLICT (term, doc_id) DO UPDATE SET
-            freq = EXCLUDED.freq;
+        --ON CONFLICT (term, doc_id) DO UPDATE SET
+        --  freq = EXCLUDED.freq;
         """
     ).format(
         pl_table=sql.Identifier(f"{collection_name}_{POSTINGS_LIST_TABLE_SUFFIX}"),
