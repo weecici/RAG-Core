@@ -14,9 +14,7 @@ def build_inverted_index(
     postings_list: dict[str, schemas.TermEntry] = {}
     doc_lens: dict[str, int] = {}
 
-    tokenized_docs = tokenize(
-        texts=texts, word_process_method=word_process_method, return_ids=False
-    )
+    tokenized_docs = tokenize(texts=texts, word_process_method=word_process_method)
 
     # creating postings list
     for doc_id, tokens in zip(doc_ids, tokenized_docs):

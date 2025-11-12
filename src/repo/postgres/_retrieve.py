@@ -202,7 +202,7 @@ def index_search(
         df_table = f"{collection_name}_{DOC_FREQ_TABLE_SUFFIX}"
 
         tokenized_texts = tokenize(
-            texts=query_texts, word_process_method=word_process_method, return_ids=False
+            texts=query_texts, word_process_method=word_process_method
         )
 
         pl_select = sql.SQL("SELECT doc_id, freq FROM {} WHERE term = %s;").format(
@@ -296,7 +296,7 @@ def index_search(
             retrieved_docs = list(doc_scores.values())
             retrieved_docs.sort(key=lambda x: x.score, reverse=True)
 
-            results_all.append(retrieved_docs)
+            results_all.append(retrieved_docs[:top_k])
 
     return results_all
 
