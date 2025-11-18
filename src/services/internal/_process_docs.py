@@ -15,16 +15,13 @@ def process_documents(file_paths: list[str], file_dir: str) -> list[TextNode]:
 
     nodes = []
     for doc in docs:
-        doc.doc_id = doc.metadata.get("file_name", "unknown").split(".")[0]
+        title = doc.metadata.get("file_name", "unknown").split(".")[0]
         chunks = splitter.split_text(doc.text)
         for idx, chunk in enumerate(chunks):
 
-            node_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{doc.doc_id}_{idx}"))
-
+            node_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{title}_{idx}"))
             metadata = schemas.DocumentMetadata(
-                document_id=doc.doc_id,
-                title=doc.metadata.get("title", "none"),
-                file_name=doc.metadata.get("file_name", "unknown"),
+                title=title,
                 file_path=doc.metadata.get("file_path", "unknown"),
             )
 

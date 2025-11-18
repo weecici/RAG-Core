@@ -3,10 +3,8 @@ from typing import Union
 
 
 class DocumentMetadata(BaseModel):
-    document_id: str = Field(..., description="The ID of the document")
     title: str = Field(..., description="The title of the document")
-    file_name: str = Field(..., description="The name of the file")
-    file_path: str = Field(..., description="The path to the file")
+    file_path: str = Field(..., description="The name of the file")
 
 
 class DocumentPayload(BaseModel):

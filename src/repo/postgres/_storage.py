@@ -55,9 +55,7 @@ def ensure_collection_exists(
 		CREATE TABLE IF NOT EXISTS {main_table} (
 			id UUID PRIMARY KEY,
 			text TEXT NOT NULL,
-			document_id TEXT,
 			title TEXT,
-			file_name TEXT,
 			file_path TEXT,
 			{dense_col} vector({dense_dim}) NOT NULL,
 			{sparse_col} sparsevec({sparse_dim}) NOT NULL,
@@ -189,16 +187,8 @@ def upsert_data(
 
     insert_main_table = sql.SQL(
         """
-		INSERT INTO {table} (id, text, document_id, title, file_name, file_path, {dense_col}, {sparse_col}, doc_len)
-		VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        --ON CONFLICT (id) DO UPDATE SET
-        --  text = EXCLUDED.text,
-        --  document_id = EXCLUDED.document_id,
-        --  title = EXCLUDED.title,
-        --  file_name = EXCLUDED.file_name,
-        --  file_path = EXCLUDED.file_path,
-        --  {dense_col} = EXCLUDED.{dense_col},
-        --  {sparse_col} = EXCLUDED.{sparse_col};
+		INSERT INTO {table} (id, text, title, file_path, {dense_col}, {sparse_col}, doc_len)
+		VALUES (%s, %s, %s, %s, %s, %s, %s)
 		"""
     ).format(
         table=sql.Identifier(collection_name),
@@ -221,8 +211,6 @@ def upsert_data(
         """
         INSERT INTO {pl_table} (term, doc_id, freq)
         VALUES (%s, %s, %s)
-        --ON CONFLICT (term, doc_id) DO UPDATE SET
-        --  freq = EXCLUDED.freq;
         """
     ).format(
         pl_table=sql.Identifier(f"{collection_name}_{POSTINGS_LIST_TABLE_SUFFIX}"),
@@ -252,9 +240,7 @@ def upsert_data(
             (
                 UUID(node.id_),
                 payload.text,
-                payload.metadata.document_id,
                 payload.metadata.title,
-                payload.metadata.file_name,
                 payload.metadata.file_path,
                 dense_vec,
                 sparse_vec,

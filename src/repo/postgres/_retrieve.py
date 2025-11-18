@@ -20,8 +20,7 @@ def _rows_to_results(
 ) -> list[schemas.RetrievedDocument]:
     results: list[schemas.RetrievedDocument] = []
     for row in rows:
-        # row: (id, score, text, document_id, title, file_name, file_path)
-        (rid, score, text, document_id, title, file_name, file_path) = row
+        (rid, score, text, title, file_path) = row
         # Convert distance to similarity if requested
         sim_score = float(score)
         if distance_to_similarity is not None:
@@ -32,9 +31,7 @@ def _rows_to_results(
         payload = schemas.DocumentPayload(
             text=text,
             metadata=schemas.DocumentMetadata(
-                document_id=document_id or "",
                 title=title or "",
-                file_name=file_name or "",
                 file_path=file_path or "",
             ),
         )
@@ -66,9 +63,7 @@ def dense_search(
 		SELECT id,
 			   {dense_col} <=> %s AS score,
 			   text,
-			   document_id,
 			   title,
-			   file_name,
 			   file_path
 		FROM {table}
 		ORDER BY {dense_col} <=> %s
@@ -124,9 +119,7 @@ def sparse_search(
 		SELECT id,
                {sparse_col} <#> %s AS score,
 			   text,
-			   document_id,
 			   title,
-			   file_name,
 			   file_path
 		FROM {table}
         ORDER BY {sparse_col} <#> %s
@@ -212,7 +205,7 @@ def index_search(
         )
         doc_select = sql.SQL(
             """
-            SELECT id, text, document_id, title, file_name, file_path, doc_len
+            SELECT id, text, title, file_path, doc_len
             FROM {}
             WHERE id = %s;
             """
@@ -256,9 +249,7 @@ def index_search(
                         (
                             _,
                             text,
-                            document_id,
                             title,
-                            file_name,
                             file_path,
                             dl,
                         ) = drow
@@ -266,9 +257,7 @@ def index_search(
                         payload = schemas.DocumentPayload(
                             text=text,
                             metadata=schemas.DocumentMetadata(
-                                document_id=document_id or "",
                                 title=title or "",
-                                file_name=file_name or "",
                                 file_path=file_path or "",
                             ),
                         )
