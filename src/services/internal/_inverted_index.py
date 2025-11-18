@@ -5,12 +5,14 @@ from src.utils import tokenize
 
 
 def build_inverted_index(
-    texts: list[str],
     doc_ids: list[str],
+    texts: list[str],
     word_process_method: str = config.WORD_PROCESS_METHOD,
 ) -> tuple[dict[str, schemas.TermEntry], dict[str, int]]:
     """Returns postings list and document lengths for the given texts."""
 
+    if len(doc_ids) != len(texts):
+        raise ValueError("doc_ids and texts must have the same length")
     postings_list: dict[str, schemas.TermEntry] = {}
     doc_lens: dict[str, int] = {}
 

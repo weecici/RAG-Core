@@ -28,11 +28,15 @@ def ingest_documents(request: schemas.IngestionRequest) -> schemas.IngestionResp
 
         logger.info(f"Processed {len(nodes)} chunks with UUIDs and metadata.")
 
+        texts = [node.text for node in nodes]
+        titles = [node.metadata.get("title", "none") for node in nodes]
+        full_texts = [f"{title} {text}" for title, text in zip(titles, texts)]
+
         # Create dense embeddings for the docs
         dense_embeddings = dense_encode(
-            texts=[node.text for node in nodes],
-            titles=[node.metadata.get("title", "none") for node in nodes],
             text_type="document",
+            texts=full_texts,
+            titles=titles,
         )
 
         logger.info(
@@ -42,15 +46,15 @@ def ingest_documents(request: schemas.IngestionRequest) -> schemas.IngestionResp
         # Create sparse embeddings for the docs
         sparse_embeddings = sparse_encode(
             text_type="document",
-            texts=[node.text for node in nodes],
+            texts=full_texts,
         )
 
         logger.info(f"Generated {len(sparse_embeddings)} sparse embeddings.")
 
         # Build inverted index (postings list) for the docs
         postings_list, doc_lens = build_inverted_index(
-            texts=[node.text for node in nodes],
             doc_ids=[node.id_ for node in nodes],
+            texts=full_texts,
         )
 
         logger.info(f"Built inverted index with size: {len(postings_list)}")

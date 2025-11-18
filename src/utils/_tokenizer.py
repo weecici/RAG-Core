@@ -28,13 +28,13 @@ def tokenize(
     if word_process_method == "lemmatize":
         process_method = lemmatize
 
-    tok_lists = [word_tokenize(text) for text in texts]
+    tok_lists = [word_tokenize(text.lower()) for text in texts]
 
     sw_punc_rm_tok_lists = [
         [
             token
             for token in tokens
-            if not (token.lower() in _stopwords or token in _punctuations)
+            if not (token in _stopwords or token in _punctuations)
         ]
         for tokens in tok_lists
     ]
