@@ -31,8 +31,8 @@ def _rows_to_results(
         payload = schemas.DocumentPayload(
             text=text,
             metadata=schemas.DocumentMetadata(
-                title=title or "",
-                file_path=file_path or "",
+                title=title,
+                file_path=file_path,
             ),
         )
         results.append(
@@ -174,6 +174,10 @@ def index_search(
     conn = get_pg_conn()
     ensure_collection_exists(collection_name=collection_name)
 
+    logger.info(
+        f"index_search collection={collection_name} top_k={top_k} word_process_method={word_process_method} scoring_method={scoring_method}"
+    )
+
     results_all: list[list[schemas.RetrievedDocument]] = []
 
     # Precompute corpus stats once
@@ -246,19 +250,14 @@ def index_search(
                         drow = cur.fetchone()
                         if not drow:
                             continue
-                        (
-                            _,
-                            text,
-                            title,
-                            file_path,
-                            dl,
-                        ) = drow
+
+                        _, text, title, file_path, dl = drow
 
                         payload = schemas.DocumentPayload(
                             text=text,
                             metadata=schemas.DocumentMetadata(
-                                title=title or "",
-                                file_path=file_path or "",
+                                title=title,
+                                file_path=file_path,
                             ),
                         )
 
@@ -296,6 +295,7 @@ def hybrid_search(
     top_k: int = 5,
     overfetch_mul: float = 2.0,
     fusion_method: Literal["dbsf", "rrf"] = config.FUSION_METHOD,
+    alpha: float = config.FUSION_ALPHA,  # weight for dense in fusion
     dense_name: str = config.DENSE_MODEL,
     sparse_name: str = config.SPARSE_MODEL,
 ) -> list[list[schemas.RetrievedDocument]]:
@@ -317,7 +317,9 @@ def hybrid_search(
 
     fused_results: list[list[schemas.RetrievedDocument]] = []
     for d_res, s_res in zip(dense_results, sparse_results):
-        fused = fuse_results(results1=d_res, results2=s_res, method=fusion_method)
+        fused = fuse_results(
+            results1=d_res, results2=s_res, alpha=alpha, method=fusion_method
+        )
         fused_results.append(fused[:top_k])
 
     return fused_results
@@ -329,6 +331,7 @@ def ii_hybrid_search(
     collection_name: str,
     top_k: int = 5,
     overfetch_mul: float = 2.0,
+    alpha: float = config.FUSION_ALPHA,  # weight for dense in fusion
     fusion_method: Literal["dbsf", "rrf"] = config.FUSION_METHOD,
     dense_name: str = config.DENSE_MODEL,
 ) -> list[list[schemas.RetrievedDocument]]:
@@ -349,7 +352,9 @@ def ii_hybrid_search(
 
     fused_results: list[list[schemas.RetrievedDocument]] = []
     for d_res, s_res in zip(dense_results, sparse_results):
-        fused = fuse_results(results1=d_res, results2=s_res, method=fusion_method)
+        fused = fuse_results(
+            results1=d_res, results2=s_res, alpha=alpha, method=fusion_method
+        )
         fused_results.append(fused[:top_k])
 
     return fused_results
