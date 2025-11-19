@@ -53,7 +53,7 @@ def ensure_collection_exists(
     create_main_table = sql.SQL(
         """
 		CREATE TABLE IF NOT EXISTS {main_table} (
-			id UUID PRIMARY KEY,
+			id TEXT PRIMARY KEY,
 			text TEXT NOT NULL,
 			title TEXT,
 			file_path TEXT,
@@ -112,7 +112,7 @@ def ensure_collection_exists(
         """
         CREATE TABLE IF NOT EXISTS {pl_table} (
             term TEXT,
-            doc_id UUID,
+            doc_id TEXT,
             freq INT NOT NULL,
             PRIMARY KEY (term, doc_id),
             FOREIGN KEY (term) REFERENCES {df_table}(term) ON DELETE CASCADE,
@@ -238,7 +238,7 @@ def upsert_data(
 
         main_rows.append(
             (
-                UUID(node.id_),
+                node.id_,
                 payload.text,
                 payload.metadata.title,
                 payload.metadata.file_path,
@@ -260,7 +260,7 @@ def upsert_data(
             pl_rows.append(
                 (
                     term,
-                    UUID(posting.doc_id),
+                    posting.doc_id,
                     posting.term_freq,
                 )
             )

@@ -20,7 +20,7 @@ def _rows_to_results(
 ) -> list[schemas.RetrievedDocument]:
     results: list[schemas.RetrievedDocument] = []
     for row in rows:
-        (rid, score, text, title, file_path) = row
+        (id, score, text, title, file_path) = row
         # Convert distance to similarity if requested
         sim_score = float(score)
         if distance_to_similarity is not None:
@@ -37,7 +37,7 @@ def _rows_to_results(
         )
         results.append(
             schemas.RetrievedDocument(
-                id=str(rid),
+                id=id,
                 score=sim_score,
                 payload=payload,
             )
