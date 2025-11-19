@@ -84,3 +84,9 @@ def ingest_documents(request: schemas.IngestionRequest) -> schemas.IngestionResp
         return schemas.IngestionResponse(
             status=status.HTTP_500_INTERNAL_SERVER_ERROR, message=str(e)
         )
+
+
+def ingest_ir_dataset(
+    request: schemas.IRDatasetIngestionRequest,
+) -> schemas.IngestionResponse:
+    return

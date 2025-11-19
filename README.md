@@ -104,3 +104,4 @@ flowchart TD
 - [x] Dockerize the entire pipeline (still not test, not sure it can run)
 - [ ] Support more scoring methods in inverted index retrieval (e.g., BM25 variants)
 - [ ] Evaluate the retrieval with standard IR metrics (e.g., MAP, nDCG) and classic datasets (e.g., MS MARCO, TREC)
+- [ ] Optimize the Ingestion request for raw file rather than file path

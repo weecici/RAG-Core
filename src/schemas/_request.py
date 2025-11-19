@@ -14,6 +14,12 @@ class IngestionRequest(BaseModel):
     )
 
 
+class IRDatasetIngestionRequest(BaseModel):
+    dataset_name: str = Field(
+        ..., description="Name of the IR dataset to ingest", examples="cranfield"
+    )
+
+
 class RetrievalRequest(BaseModel):
     queries: list[str] = Field(..., description="The list of query texts")
     collection_name: str = Field(
