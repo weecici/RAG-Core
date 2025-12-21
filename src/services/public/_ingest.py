@@ -1,6 +1,6 @@
 from fastapi import status
 from src import schemas
-from src.utils import logger
+from src.utils import logger, load_ir_dataset
 from src.services.internal import (
     process_documents,
     dense_encode,
@@ -80,7 +80,6 @@ def ingest_documents(request: schemas.IngestionRequest) -> schemas.IngestionResp
 
     except Exception as e:
         logger.error(f"Error while ingesting documents: {e}")
-
         return schemas.IngestionResponse(
             status=status.HTTP_500_INTERNAL_SERVER_ERROR, message=str(e)
         )
@@ -89,4 +88,66 @@ def ingest_documents(request: schemas.IngestionRequest) -> schemas.IngestionResp
 def ingest_ir_dataset(
     request: schemas.IRDatasetIngestionRequest,
 ) -> schemas.IngestionResponse:
-    return
+    logger.info(f"Starting IR dataset ingestion for dataset {request.dataset_name}")
+    try:
+        nodes = load_ir_dataset(dataset_name=request.dataset_name)
+
+        if len(nodes) == 0:
+            raise ValueError("No nodes were created from the provided documents.")
+
+        logger.info(f"Processed {len(nodes)} chunks with UUIDs and metadata.")
+
+        texts = [node.text for node in nodes]
+        titles = [node.metadata.get("title", "none") for node in nodes]
+        full_texts = [f"{title} {text}" for title, text in zip(titles, texts)]
+
+        # Create dense embeddings for the docs
+        dense_embeddings = dense_encode(
+            text_type="document",
+            texts=full_texts,
+            titles=titles,
+        )
+
+        logger.info(
+            f"Generated {len(dense_embeddings)} dense embeddings with each embedding's size is: {len(dense_embeddings[0])}"
+        )
+
+        # Create sparse embeddings for the docs
+        sparse_embeddings = sparse_encode(
+            text_type="document",
+            texts=full_texts,
+        )
+
+        logger.info(f"Generated {len(sparse_embeddings)} sparse embeddings.")
+
+        # Build inverted index (postings list) for the docs
+        postings_list, doc_lens = build_inverted_index(
+            doc_ids=[node.id_ for node in nodes],
+            texts=full_texts,
+        )
+
+        logger.info(f"Built inverted index with size: {len(postings_list)}")
+
+        # Upsert data (embeddings + postings list) into DB
+        upsert_data(
+            nodes=nodes,
+            dense_embeddings=dense_embeddings,
+            sparse_embeddings=sparse_embeddings,
+            postings_list=postings_list,
+            doc_lens=doc_lens,
+            collection_name=request.collection_name,
+        )
+
+        logger.info(
+            f"Completed ingestion process of {len(nodes)} documents for collection '{request.collection_name}'."
+        )
+
+        return schemas.IngestionResponse(
+            status=status.HTTP_201_CREATED,
+            message=f"Successfully ingested {len(nodes)} documents of dataset '{request.dataset_name}'.",
+        )
+    except Exception as e:
+        logger.error(f"Error while ingesting IR dataset: {e}")
+        return schemas.IngestionResponse(
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR, message=str(e)
+        )
