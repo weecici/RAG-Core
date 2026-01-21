@@ -16,3 +16,17 @@ def calc_okapi_bm25(
     numerator = tf * (k1 + 1)
     denominator = tf + k1 * (1 - b + b * dl / avg_dl)
     return idf * (numerator / denominator)
+
+
+def calc_bm25_plus(
+    tf: int,
+    idf: float,
+    dl: int,
+    avg_dl: float,
+    k1: float = 1.5,
+    b: float = 0.75,
+    delta: float = 1.0,
+) -> float:
+    numerator = tf * (k1 + 1)
+    denominator = tf + k1 * (1 - b + b * dl / avg_dl)
+    return idf * ((numerator / denominator) + delta)
