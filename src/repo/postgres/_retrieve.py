@@ -169,7 +169,7 @@ def index_search(
     collection_name: str,
     top_k: int = 5,
     word_process_method: str = config.WORD_PROCESS_METHOD,
-    scoring_method: Literal["tfidf", "okapi-bm25"] = config.SCORING_METHOD,
+    scoring_method: Literal["tfidf", "okapi-bm25", "bm25-plus"] = config.SCORING_METHOD,
 ) -> list[list[schemas.RetrievedDocument]]:
     conn = get_pg_conn()
     ensure_collection_exists(collection_name=collection_name)
@@ -217,7 +217,8 @@ def index_search(
 
         # Simple caches to avoid redundant queries within the same request batch
         df_cache: dict[str, int] = {}
-        dl_cache: dict[str, int] = {}
+        # Cache stores (doc_len, payload)
+        doc_cache: dict[str, tuple[int, schemas.DocumentPayload]] = {}
 
         for q_idx, tokens in enumerate(tokenized_texts):
             term_counts = Counter(tokens)
@@ -239,12 +240,15 @@ def index_search(
                     df = int(df_row[0]) if df_row and df_row[0] is not None else 0
                     df_cache[term] = df
 
+                if df == 0:
+                    continue
+
                 for doc_id, tf in postings:
                     sid = str(doc_id)
 
                     # fetch payload + doc_len
-                    if sid in dl_cache:
-                        dl = dl_cache[sid]
+                    if sid in doc_cache:
+                        dl, payload = doc_cache[sid]
                     else:
                         cur.execute(doc_select, (doc_id,))
                         drow = cur.fetchone()
@@ -261,7 +265,10 @@ def index_search(
                             ),
                         )
 
-                        dl_cache[sid] = int(dl) if dl is not None else 0
+                        dl = int(dl) if dl is not None else 0
+                        doc_cache[sid] = (dl, payload)
+
+                    if sid not in doc_scores:
                         doc_scores[sid] = schemas.RetrievedDocument(
                             id=sid,
                             score=0.0,
@@ -273,6 +280,10 @@ def index_search(
                         doc_scores[sid].score += query_tf * calc_tfidf(tf=tf, idf=idf)
                     elif scoring_method == "okapi-bm25":
                         doc_scores[sid].score += query_tf * calc_okapi_bm25(
+                            tf=tf, idf=idf, dl=dl, avg_dl=avg_dl
+                        )
+                    elif scoring_method == "bm25-plus":
+                        doc_scores[sid].score += query_tf * calc_bm25_plus(
                             tf=tf, idf=idf, dl=dl, avg_dl=avg_dl
                         )
                     else:
