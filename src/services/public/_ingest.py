@@ -135,11 +135,11 @@ def ingest_ir_dataset(
             sparse_embeddings=sparse_embeddings,
             postings_list=postings_list,
             doc_lens=doc_lens,
-            collection_name=request.collection_name,
+            collection_name=request.dataset_name,
         )
 
         logger.info(
-            f"Completed ingestion process of {len(nodes)} documents for collection '{request.collection_name}'."
+            f"Completed ingestion process of {len(nodes)} documents for collection '{request.dataset_name}'."
         )
 
         return schemas.IngestionResponse(
