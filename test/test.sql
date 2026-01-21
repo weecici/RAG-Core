@@ -1,14 +1,18 @@
 SELECT    *
-FROM      dump;
+FROM      cranfield;
 
 SELECT    *
-FROM      dump_df;
+FROM      cranfield_df;
 
 SELECT    *
-FROM      dump_pl;
+FROM      cranfield_pl;
 
-DROP      TABLE if EXISTS dump_pl;
+DROP      TABLE if EXISTS cranfield_pl;
 
-DROP      TABLE if EXISTS dump_df;
+DROP      TABLE if EXISTS cranfield_df;
 
-DROP      TABLE if EXISTS dump;
+DROP      TABLE if EXISTS cranfield;
+
+SELECT    *
+FROM      cranfield_df
+WHERE     term = 'shroud';
