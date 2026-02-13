@@ -170,6 +170,7 @@ def index_search(
     top_k: int = 5,
     word_process_method: str = config.WORD_PROCESS_METHOD,
     scoring_method: Literal["tfidf", "okapi-bm25", "bm25-plus"] = config.SCORING_METHOD,
+    debug_print: bool = False,
 ) -> list[list[schemas.RetrievedDocument]]:
     conn = get_pg_conn()
     ensure_collection_exists(collection_name=collection_name)
@@ -231,6 +232,12 @@ def index_search(
                 if not postings:
                     continue
 
+                if debug_print:
+                    sample = postings[:10]
+                    print(
+                        f"qid={q_idx} term={term!r} query_tf={query_tf} postings_len={len(postings)} sample={sample}"
+                    )
+
                 # fetch doc_freq (idf needs this)
                 if term in df_cache:
                     df = df_cache[term]
@@ -243,7 +250,9 @@ def index_search(
                 if df == 0:
                     continue
 
-                for doc_id, tf in postings:
+                idf = calc_idf(N=N, df=df)
+
+                for p_idx, (doc_id, tf) in enumerate(postings):
                     sid = str(doc_id)
 
                     # fetch payload + doc_len
@@ -275,20 +284,31 @@ def index_search(
                             payload=payload,
                         )
 
-                    idf = calc_idf(N=N, df=df)
                     if scoring_method == "tfidf":
-                        doc_scores[sid].score += query_tf * calc_tfidf(tf=tf, idf=idf)
+                        raw_weight = calc_tfidf(tf=tf, idf=idf)
                     elif scoring_method == "okapi-bm25":
-                        doc_scores[sid].score += query_tf * calc_okapi_bm25(
+                        raw_weight = calc_okapi_bm25(
                             tf=tf, idf=idf, dl=dl, avg_dl=avg_dl
                         )
                     elif scoring_method == "bm25-plus":
-                        doc_scores[sid].score += query_tf * calc_bm25_plus(
+                        raw_weight = calc_bm25_plus(
                             tf=tf, idf=idf, dl=dl, avg_dl=avg_dl
                         )
                     else:
                         raise ValueError(
                             f"Unsupported scoring_method: {scoring_method}"
+                        )
+
+                    delta = float(query_tf) * float(raw_weight)
+                    doc_scores[sid].score += delta
+
+                    if debug_print and p_idx < 10:
+                        try:
+                            tf_i = int(tf)
+                        except Exception:
+                            tf_i = tf
+                        print(
+                            f"   term={term!r} doc_id={sid} tf={tf_i} dl={dl} idf={idf:.6f} raw={float(raw_weight):.6f} delta={delta:.6f}"
                         )
 
             retrieved_docs = list(doc_scores.values())
